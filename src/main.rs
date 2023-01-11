@@ -14,9 +14,7 @@ fn main() {
     env_logger::init();
 
     let args = Args::parse();
-    log::info!("{:?}", &args);
-
-    all_files(&args.path)
+    let actions = all_files(&args.path)
         .unwrap()
         .map(|f| f.unwrap())
         .map(|entry| {
@@ -31,6 +29,12 @@ fn main() {
             File { entry, rom }
         })
         .filter(|file| locale_matches(file, args.locale.as_slice()))
-        .filter(|file| bad_dump_ok(file, args.bad_dumps))
-        .for_each(|f| log::info!("{:#?}", f.rom));
+        .filter(|file| bad_dump_ok(file, args.bad_dumps));
+
+    for action in actions {
+        println!("{}", action.rom.name);
+        if !args.dry_run {
+            // Move file
+        }
+    }
 }
