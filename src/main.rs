@@ -21,15 +21,12 @@ fn main() {
         .unwrap()
         .map(|f| f.unwrap())
         .map(|entry| {
-            let rom = entry
-                .path()
-                .file_name()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .parse()
-                .unwrap();
-            File { entry, rom }
+            let path = entry.path();
+            let file_name = path.file_name().unwrap().to_str().unwrap();
+
+            let rom = file_name.parse().unwrap();
+            let bytes = fs::stat(path).unwrap_or_default();
+            File { entry, bytes, rom }
         })
         .filter(|file| {
             extension_matches(
@@ -45,7 +42,7 @@ fn main() {
         .filter(|file| bad_dump_ok(file, args.bad_dumps));
 
     for action in actions {
-        term::print_rom(&action.rom);
+        term::print_rom(&action.rom, action.bytes);
         if !args.dry_run {
             let output_path =
                 Path::new(args.output.as_ref().unwrap().as_str()).join(action.rom.name);

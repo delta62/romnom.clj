@@ -36,7 +36,27 @@ fn color_tag(tag: &str) -> (u8, String) {
     (order, format!("[{}]", tag))
 }
 
-pub fn print_rom(rom: &Rom) {
+fn format_size(size: u64) -> String {
+    let num: f64;
+    let suffix: &str;
+    if size > 1_000_000_000 {
+        num = size as f64 / 1_000_000_000.0;
+        suffix = "GB";
+    } else if size > 1_000_000 {
+        num = size as f64 / 1_000_000.0;
+        suffix = "MB";
+    } else if size > 1_000 {
+        num = size as f64 / 1_000.0;
+        suffix = "kB";
+    } else {
+        num = size as f64;
+        return format!("{}b", num);
+    }
+
+    format!("{:.1}{}", num, suffix)
+}
+
+pub fn print_rom(rom: &Rom, size: u64) {
     let mut tags = rom
         .tags
         .iter()
@@ -51,5 +71,5 @@ pub fn print_rom(rom: &Rom) {
     // Format width doesn't work with ANSI codes in the string... just do it manually.
     Term::stdout().move_cursor_left(999999).unwrap();
     Term::stdout().move_cursor_right(15).unwrap();
-    println!("{}", rom.name);
+    println!("{} ({})", rom.name, style(format_size(size)).blue());
 }

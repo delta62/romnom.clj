@@ -30,6 +30,7 @@ pub struct Rom {
 #[derive(Debug)]
 pub struct File {
     pub entry: DirEntry,
+    pub bytes: u64,
     pub rom: Rom,
 }
 
