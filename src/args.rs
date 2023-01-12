@@ -16,10 +16,14 @@ pub struct Args {
     pub bad_dumps: bool,
 
     /// The path to move ROMs to
-    #[arg(short, long)]
-    pub output: String,
+    #[arg(short, long, required_if_eq("dry_run", "false"))]
+    pub output: Option<String>,
 
     /// Only calculate what would be copied, but don't actually copy anything
     #[arg(short, long)]
     pub dry_run: bool,
+
+    /// File extensions to copy. If omitted, all matching files are copied.
+    #[arg(short, long)]
+    pub extension: Vec<String>,
 }

@@ -4,10 +4,12 @@ mod filters;
 mod fs;
 mod types;
 
+use std::path::Path;
+
 use args::Args;
 use clap::Parser;
-use filters::{bad_dump_ok, locale_matches};
-use fs::all_files;
+use filters::{bad_dump_ok, extension_matches, locale_matches};
+use fs::{all_files, copy};
 use types::File;
 
 fn main() {
@@ -28,13 +30,25 @@ fn main() {
                 .unwrap();
             File { entry, rom }
         })
+        .filter(|file| {
+            extension_matches(
+                file,
+                args.extension
+                    .iter()
+                    .map(|x| x.as_str())
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+            )
+        })
         .filter(|file| locale_matches(file, args.locale.as_slice()))
         .filter(|file| bad_dump_ok(file, args.bad_dumps));
 
     for action in actions {
         println!("{}", action.rom.name);
         if !args.dry_run {
-            // Move file
+            let output_path =
+                Path::new(args.output.as_ref().unwrap().as_str()).join(action.rom.name);
+            copy(action.entry.path().as_path(), &output_path).unwrap();
         }
     }
 }
