@@ -2,6 +2,7 @@ mod args;
 mod error;
 mod filters;
 mod fs;
+mod term;
 mod types;
 
 use std::path::Path;
@@ -44,7 +45,7 @@ fn main() {
         .filter(|file| bad_dump_ok(file, args.bad_dumps));
 
     for action in actions {
-        println!("{}", action.rom.name);
+        term::print_rom(&action.rom);
         if !args.dry_run {
             let output_path =
                 Path::new(args.output.as_ref().unwrap().as_str()).join(action.rom.name);
