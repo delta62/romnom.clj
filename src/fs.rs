@@ -12,5 +12,8 @@ pub async fn stat<P: AsRef<Path>>(path: P) -> Result<Metadata> {
 }
 
 pub async fn copy(from: &Path, to: &Path) -> Result<()> {
-    Err(Error::IoError)
+    fs::copy(from, to)
+        .await
+        .map(|_| ())
+        .map_err(|_| Error::IoError)
 }

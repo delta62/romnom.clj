@@ -13,9 +13,9 @@ pub enum Locale {
 impl Locale {
     pub fn represented_by(&self, s: &str) -> bool {
         match self {
-            Self::UnitedStates => s.contains("U"),
-            Self::Europe => s.contains("E"),
-            Self::Japan => s.contains("J"),
+            Self::UnitedStates => s.contains('U'),
+            Self::Europe => s.contains('E'),
+            Self::Japan => s.contains('J'),
         }
     }
 }
