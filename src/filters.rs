@@ -1,26 +1,27 @@
-use crate::types::{File, Locale};
+use crate::types::{Locale, Rom};
+use std::path::Path;
 
-pub fn locale_matches(file: &File, locales: &[Locale]) -> bool {
+pub fn locale_matches(rom: &Rom, locales: &[Locale]) -> bool {
     locales.is_empty()
         || locales
             .iter()
-            .any(|locale| file.rom.tags.iter().any(|tag| locale.represented_by(tag)))
+            .any(|locale| rom.tags.iter().any(|tag| locale.represented_by(tag)))
 }
 
-pub fn bad_dump_ok(file: &File, allow_bad_dumps: bool) -> bool {
-    allow_bad_dumps || !file.rom.tags.contains("b")
+pub fn bad_dump_ok(rom: &Rom, allow_bad_dumps: bool) -> bool {
+    allow_bad_dumps || !rom.tags.contains("b")
 }
 
-pub fn extension_matches(file: &File, extensions: &[&str]) -> bool {
+pub fn extension_matches<P: AsRef<Path>, T: AsRef<str>>(path: P, extensions: &[T]) -> bool {
     if extensions.is_empty() {
         return true;
     }
 
-    let path = file.entry.path();
-    let os_path = path.as_path().extension();
+    let os_path = path.as_ref().extension();
 
     if let Some(path) = os_path {
-        extensions.contains(&path.to_str().unwrap())
+        let path = path.to_str().unwrap();
+        extensions.iter().any(|e| path == e.as_ref())
     } else {
         false
     }

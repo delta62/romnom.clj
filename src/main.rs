@@ -9,44 +9,36 @@ use std::path::Path;
 
 use args::Args;
 use clap::Parser;
+use error::Error;
 use filters::{bad_dump_ok, extension_matches, locale_matches};
-use fs::{all_files, copy};
-use types::File;
+use fs::{copy, read_dir};
 
-fn main() {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<(), Error> {
     env_logger::init();
 
     let args = Args::parse();
-    let actions = all_files(&args.path)
-        .unwrap()
-        .map(|f| f.unwrap())
-        .map(|entry| {
-            let path = entry.path();
-            let file_name = path.file_name().unwrap().to_str().unwrap();
+    let mut actions = read_dir(&args.path).await?;
 
-            let rom = file_name.parse().unwrap();
-            let bytes = fs::stat(path).unwrap_or_default();
-            File { entry, bytes, rom }
-        })
-        .filter(|file| {
-            extension_matches(
-                file,
-                args.extension
-                    .iter()
-                    .map(|x| x.as_str())
-                    .collect::<Vec<_>>()
-                    .as_slice(),
-            )
-        })
-        .filter(|file| locale_matches(file, args.locale.as_slice()))
-        .filter(|file| bad_dump_ok(file, args.bad_dumps));
+    while let Some(entry) = actions.next_entry().await.map_err(|_| Error::IoError)? {
+        let path = entry.path();
+        let file_name = path.file_name().unwrap().to_str().unwrap();
+        let rom = file_name.parse().unwrap();
+        let bytes = fs::stat(&path).await.map(|s| s.len()).unwrap_or_default();
 
-    for action in actions {
-        term::print_rom(&action.rom, action.bytes);
+        if !extension_matches(&path, args.extension.as_slice())
+            | !locale_matches(&rom, args.locale.as_slice())
+            | !bad_dump_ok(&rom, args.bad_dumps)
+        {
+            continue;
+        }
+
+        term::print_rom(&rom, bytes);
         if !args.dry_run {
-            let output_path =
-                Path::new(args.output.as_ref().unwrap().as_str()).join(action.rom.name);
-            copy(action.entry.path().as_path(), &output_path).unwrap();
+            let output_path = Path::new(args.output.as_ref().unwrap().as_str()).join(rom.name);
+            copy(entry.path().as_path(), &output_path).await.unwrap();
         }
     }
+
+    Ok(())
 }
