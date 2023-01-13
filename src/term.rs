@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::types::Rom;
 use console::{style, Term};
 use lazy_static::lazy_static;
@@ -72,4 +74,12 @@ pub fn print_rom(rom: &Rom, size: u64) {
     Term::stdout().move_cursor_left(999999).unwrap();
     Term::stdout().move_cursor_right(15).unwrap();
     println!("{} ({})", rom.name, style(format_size(size)).blue());
+}
+
+pub fn print_duration(item_count: usize, duration: &Duration) {
+    println!(
+        "\nProcessed {} items in {:?}\n",
+        style(item_count).green(),
+        style(duration).blue()
+    );
 }

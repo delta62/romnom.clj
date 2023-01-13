@@ -11,13 +11,14 @@ use error::Error;
 use filters::{bad_dump_ok, extension_matches, locale_matches};
 use fs::{copy, read_dir};
 use futures::future::try_join_all;
-use std::path::Path;
+use std::{path::Path, time::Instant};
 use tokio::fs::DirEntry;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Error> {
     env_logger::init();
 
+    let start_time = Instant::now();
     let args = Args::parse();
     let mut actions = read_dir(&args.path).await?;
     let mut tasks = Vec::new();
@@ -26,10 +27,15 @@ async fn main() -> Result<(), Error> {
         tasks.push(maybe_copy_file(entry, &args));
     }
 
-    try_join_all(tasks)
+    let task_count = try_join_all(tasks)
         .await
-        .map(|_| ())
-        .map_err(|_| Error::IoError)
+        .map(|tasks| tasks.len())
+        .map_err(|_| Error::IoError)?;
+
+    let duration = Instant::now().duration_since(start_time);
+    term::print_duration(task_count, &duration);
+
+    Ok(())
 }
 
 async fn maybe_copy_file(entry: DirEntry, args: &Args) -> Result<(), Error> {
