@@ -26,3 +26,7 @@ pub fn extension_matches<P: AsRef<Path>, T: AsRef<str>>(path: P, extensions: &[T
         false
     }
 }
+
+pub fn video_ok(rom: &Rom, allow_videos: bool) -> bool {
+    allow_videos || !rom.tags.contains("Video")
+}

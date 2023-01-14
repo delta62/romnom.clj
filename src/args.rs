@@ -26,4 +26,8 @@ pub struct Args {
     /// File extensions to copy. If omitted, all matching files are copied.
     #[arg(short, long)]
     pub extension: Vec<String>,
+
+    /// Include ROMs marked as videos
+    #[arg(short, long)]
+    pub videos: bool,
 }

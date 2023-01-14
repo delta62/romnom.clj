@@ -8,7 +8,7 @@ mod types;
 use args::Args;
 use clap::Parser;
 use error::Error;
-use filters::{bad_dump_ok, extension_matches, locale_matches};
+use filters::{bad_dump_ok, extension_matches, locale_matches, video_ok};
 use fs::{copy, read_dir};
 use futures::future::try_join_all;
 use std::{path::Path, time::Instant};
@@ -27,18 +27,19 @@ async fn main() -> Result<(), Error> {
         tasks.push(maybe_copy_file(entry, &args));
     }
 
-    let task_count = try_join_all(tasks)
+    let (processed, ignored): (Vec<bool>, Vec<bool>) = try_join_all(tasks)
         .await
-        .map(|tasks| tasks.len())
-        .map_err(|_| Error::IoError)?;
+        .map_err(|_| Error::IoError)?
+        .into_iter()
+        .partition(|x| *x);
 
     let duration = Instant::now().duration_since(start_time);
-    term::print_duration(task_count, &duration);
+    term::print_duration(processed.len(), ignored.len(), duration);
 
     Ok(())
 }
 
-async fn maybe_copy_file(entry: DirEntry, args: &Args) -> Result<(), Error> {
+async fn maybe_copy_file(entry: DirEntry, args: &Args) -> Result<bool, Error> {
     let path = entry.path();
     let file_name = path.file_name().unwrap().to_str().unwrap();
     let rom = file_name.parse().unwrap();
@@ -47,8 +48,9 @@ async fn maybe_copy_file(entry: DirEntry, args: &Args) -> Result<(), Error> {
     if !extension_matches(&path, args.extension.as_slice())
         | !locale_matches(&rom, args.locale.as_slice())
         | !bad_dump_ok(&rom, args.bad_dumps)
+        | !video_ok(&rom, args.videos)
     {
-        return Ok(());
+        return Ok(false);
     }
 
     term::print_rom(&rom, bytes);
@@ -61,5 +63,5 @@ async fn maybe_copy_file(entry: DirEntry, args: &Args) -> Result<(), Error> {
         copy(in_path, &out_path).await.unwrap();
     }
 
-    Ok(())
+    Ok(true)
 }

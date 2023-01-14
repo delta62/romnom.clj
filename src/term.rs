@@ -76,10 +76,11 @@ pub fn print_rom(rom: &Rom, size: u64) {
     println!("{} ({})", rom.name, style(format_size(size)).blue());
 }
 
-pub fn print_duration(item_count: usize, duration: &Duration) {
+pub fn print_duration(processed_count: usize, ignored_count: usize, duration: Duration) {
     println!(
-        "\nProcessed {} items in {:?}\n",
-        style(item_count).green(),
-        style(duration).blue()
+        "\nProcessed {} items, ignored {} in {:?}\n",
+        style(processed_count).green(),
+        style(ignored_count).yellow(),
+        style(duration).blue(),
     );
 }
