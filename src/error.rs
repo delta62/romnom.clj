@@ -1,6 +1,8 @@
+use std::io;
+
 #[derive(Debug)]
 pub enum Error {
-    IoError,
+    IoError(io::Error),
 }
 
 impl std::fmt::Display for Error {

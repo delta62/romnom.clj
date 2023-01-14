@@ -23,15 +23,12 @@ async fn main() -> Result<()> {
     let mut actions = read_dir(&args.path).await?;
     let mut tasks = Vec::new();
 
-    while let Some(entry) = actions.next_entry().await.map_err(|_| Error::IoError)? {
+    while let Some(entry) = actions.next_entry().await.map_err(Error::IoError)? {
         tasks.push(maybe_copy_file(entry, &args));
     }
 
-    let (processed, ignored): (Vec<bool>, Vec<bool>) = try_join_all(tasks)
-        .await
-        .map_err(|_| Error::IoError)?
-        .into_iter()
-        .partition(|x| *x);
+    let (processed, ignored): (Vec<bool>, Vec<bool>) =
+        try_join_all(tasks).await?.into_iter().partition(|x| *x);
 
     let duration = Instant::now().duration_since(start_time);
     term::print_duration(processed.len(), ignored.len(), duration);
