@@ -7,7 +7,7 @@ mod types;
 
 use args::Args;
 use clap::Parser;
-use error::Error;
+use error::{Error, Result};
 use filters::{bad_dump_ok, extension_matches, locale_matches, video_ok};
 use fs::{copy, read_dir};
 use futures::future::try_join_all;
@@ -15,7 +15,7 @@ use std::{path::Path, time::Instant};
 use tokio::fs::DirEntry;
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<()> {
     env_logger::init();
 
     let start_time = Instant::now();
@@ -39,7 +39,7 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn maybe_copy_file(entry: DirEntry, args: &Args) -> Result<bool, Error> {
+async fn maybe_copy_file(entry: DirEntry, args: &Args) -> Result<bool> {
     let path = entry.path();
     let file_name = path.file_name().unwrap().to_str().unwrap();
     let rom = file_name.parse().unwrap();
@@ -60,7 +60,7 @@ async fn maybe_copy_file(entry: DirEntry, args: &Args) -> Result<bool, Error> {
         let in_path = inn.as_path();
         let out_path = Path::new(out).join(rom.name);
 
-        copy(in_path, &out_path).await.unwrap();
+        copy(in_path, &out_path).await?;
     }
 
     Ok(true)

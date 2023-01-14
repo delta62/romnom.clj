@@ -1,7 +1,6 @@
 use lazy_static::lazy_static;
 use regex::{Captures, Regex};
-use std::fs::DirEntry;
-use std::{borrow::Cow, collections::HashSet, str::FromStr};
+use std::{collections::HashSet, str::FromStr};
 
 #[derive(Clone, Copy, Hash, Debug, clap::ValueEnum, PartialEq, Eq)]
 pub enum Locale {
@@ -23,15 +22,7 @@ impl Locale {
 #[derive(Debug)]
 pub struct Rom {
     pub name: String,
-    pub number: Option<u32>,
     pub tags: HashSet<String>,
-}
-
-#[derive(Debug)]
-pub struct File {
-    pub entry: DirEntry,
-    pub bytes: u64,
-    pub rom: Rom,
 }
 
 impl FromStr for Rom {
@@ -39,18 +30,12 @@ impl FromStr for Rom {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         lazy_static! {
-            static ref PREFIX: Regex = Regex::new(r"^(\d{4,}) - ").unwrap();
+            static ref PREFIX: Regex = Regex::new(r"^\d{4,} - ").unwrap();
             static ref TAGS: Regex = Regex::new(r"(?i)\(([^)]+)\)|\[([^\]]+)\]").unwrap();
             static ref EXTENSION: Regex = Regex::new(r"\s+(\.\w+)$").unwrap();
         };
 
-        let mut number = None;
-        let file_name = PREFIX.replace(s, |caps: &Captures| {
-            if let Some(m) = caps.get(1) {
-                number = Some(u32::from_str(m.as_str()).unwrap());
-            }
-            Cow::Owned(String::new())
-        });
+        let file_name = PREFIX.replace(s, "");
 
         let mut tags = HashSet::with_capacity(20);
         let name = TAGS
@@ -68,6 +53,6 @@ impl FromStr for Rom {
             })
             .to_string();
 
-        Ok(Rom { number, tags, name })
+        Ok(Rom { tags, name })
     }
 }
